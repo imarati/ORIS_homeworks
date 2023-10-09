@@ -3,8 +3,11 @@ package repositories;
 import models.User;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +35,28 @@ public class UserRepositoryJdbcImpl implements UserRepository{
     }
         System.out.println(entity.getFirstname() + " " + entity.getPassword() + " " + entity.getLogin() + " " + entity.getPassword());
 
+    }
+
+    @Override
+    public void findBylogin(String login, String password) {
+        String sql = "select * from users where login = '" + login + "'";
+
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet logintSet = statement.executeQuery(sql);
+            logintSet.next();
+            User user = User.builder()
+                    .firstname(logintSet.getString("firstname"))
+                    .surname(logintSet.getString("surname"))
+                    .login(logintSet.getString("login"))
+                    .password(logintSet.getString("pass"))
+                    .build();
+
+            System.out.println(user.getPassword().equals(password));
+        }
+        catch (SQLException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
 }
