@@ -6,10 +6,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class UserRepositoryJdbcImpl implements UserRepository{
 
@@ -17,7 +14,7 @@ public class UserRepositoryJdbcImpl implements UserRepository{
     private Statement statement;
 
     private static final String SQL_SELECT_ALL_FROM_USERS = "select * from users";
-    private static final String SQL_INSERT_INTO_USERS = "INSERT INTO users (firstname, surname, login, pass) VALUES ";
+    private static final String SQL_INSERT_INTO_USERS = "INSERT INTO users (uuid ,firstname, surname, login, pass) VALUES ";
 
     public UserRepositoryJdbcImpl(Connection connection, Statement statement) {
         this.connection = connection;
@@ -25,16 +22,19 @@ public class UserRepositoryJdbcImpl implements UserRepository{
     }
 
     @Override
-    public void save(User entity) {
-        String sql = SQL_INSERT_INTO_USERS + "('" + entity.getFirstname() + "', '" + entity.getSurname() + "', '" + entity.getLogin() + "', '" + entity.getPassword() + "')";
-    try {
-        statement.executeUpdate(sql);
-    }
-    catch (SQLException e) {
-        throw new IllegalArgumentException(e);
-    }
-        System.out.println(entity.getFirstname() + " " + entity.getPassword() + " " + entity.getLogin() + " " + entity.getPassword());
+    public UUID save(User entity) {
+        UUID uuid = UUID.randomUUID();
 
+        String sql = SQL_INSERT_INTO_USERS + "('" + uuid.toString() + "', '" + entity.getFirstname() + "', '" + entity.getSurname() + "', '" + entity.getLogin() + "', '" + entity.getPassword() + "')";
+        try {
+            statement.executeUpdate(sql);
+        }
+        catch (SQLException e) {
+            throw new IllegalArgumentException(e);
+        }
+            System.out.println(entity.getFirstname() + " " + entity.getPassword() + " " + entity.getLogin() + " " + entity.getPassword());
+
+        return uuid;
     }
 
     @Override
@@ -58,5 +58,23 @@ public class UserRepositoryJdbcImpl implements UserRepository{
             throw new IllegalArgumentException(e);
         }
     }
+
+    @Override
+    public boolean findByUuid(String uuid) {
+        String sql = "select * from users where uuid = '" + uuid + "'";
+
+        try {
+            Statement statement = connection.createStatement();
+            ResultSet logintSet = statement.executeQuery(sql);
+
+            if(logintSet.next()) {
+                return true;
+            }
+        }
+        catch (SQLException ignored) {}
+
+        return false;
+    }
+
 
 }

@@ -6,6 +6,7 @@ import repositories.UserRepositoryJdbcImpl;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,6 +15,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.UUID;
 
 @WebServlet("/reg")
 public class RegistrationServlet extends HttpServlet {
@@ -43,7 +45,19 @@ public class RegistrationServlet extends HttpServlet {
     }
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        request.getRequestDispatcher("/html/registration.html").forward(request, response);
+        Cookie[] cookies = request.getCookies();
+        boolean isExist = false;
+        if(cookies !=null) {
+            for(Cookie c: cookies) {
+                if(usersRepository.findByUuid(c.getValue())) {
+                    isExist = true;
+                    request.getRequestDispatcher("/html/auth.html").forward(request, response);
+                }
+            }
+        }
+        if (!isExist) {
+            request.getRequestDispatcher("/html/registration.html").forward(request, response);
+        }
     }
 
     @Override
@@ -60,6 +74,8 @@ public class RegistrationServlet extends HttpServlet {
                 .password(password)
                 .build();
 
-        usersRepository.save(user);
+         UUID uuid = usersRepository.save(user);
+
+         resp.addCookie(new Cookie(user.getFirstname() + "uuid", uuid.toString()));
     }
 }
