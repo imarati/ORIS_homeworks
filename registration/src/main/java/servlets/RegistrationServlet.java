@@ -3,6 +3,8 @@ package servlets;
 import models.User;
 import repositories.UserRepository;
 import repositories.UserRepositoryJdbcImpl;
+import repositories.UuidRepository;
+import repositories.UuidRepositoryJdbcImpl;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -15,7 +17,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.UUID;
 
 @WebServlet("/reg")
 public class RegistrationServlet extends HttpServlet {
@@ -25,6 +26,7 @@ public class RegistrationServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/usersdb";
 
     private UserRepository usersRepository;
+    private UuidRepository uuidRepository;
 
     @Override
     public void init() throws ServletException {
@@ -39,6 +41,7 @@ public class RegistrationServlet extends HttpServlet {
             Connection connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             Statement statement = connection.createStatement();
             usersRepository = new UserRepositoryJdbcImpl(connection, statement);
+            uuidRepository = new UuidRepositoryJdbcImpl(connection, statement);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -49,9 +52,9 @@ public class RegistrationServlet extends HttpServlet {
         boolean isExist = false;
         if(cookies !=null) {
             for(Cookie c: cookies) {
-                if(usersRepository.findByUuid(c.getValue())) {
+                if(uuidRepository.findByUuid(c.getValue())) {
                     isExist = true;
-                    request.getRequestDispatcher("/html/auth.html").forward(request, response);
+                    response.sendRedirect("/auth");
                 }
             }
         }
@@ -74,8 +77,6 @@ public class RegistrationServlet extends HttpServlet {
                 .password(password)
                 .build();
 
-         UUID uuid = usersRepository.save(user);
-
-         resp.addCookie(new Cookie(user.getFirstname() + "uuid", uuid.toString()));
+        usersRepository.save(user);
     }
 }

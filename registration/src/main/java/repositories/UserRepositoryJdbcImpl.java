@@ -14,7 +14,7 @@ public class UserRepositoryJdbcImpl implements UserRepository{
     private Statement statement;
 
     private static final String SQL_SELECT_ALL_FROM_USERS = "select * from users";
-    private static final String SQL_INSERT_INTO_USERS = "INSERT INTO users (uuid ,firstname, surname, login, pass) VALUES ";
+    private static final String SQL_INSERT_INTO_USERS = "INSERT INTO users (firstname, surname, login, pass) VALUES ";
 
     public UserRepositoryJdbcImpl(Connection connection, Statement statement) {
         this.connection = connection;
@@ -22,23 +22,19 @@ public class UserRepositoryJdbcImpl implements UserRepository{
     }
 
     @Override
-    public UUID save(User entity) {
-        UUID uuid = UUID.randomUUID();
-
-        String sql = SQL_INSERT_INTO_USERS + "('" + uuid.toString() + "', '" + entity.getFirstname() + "', '" + entity.getSurname() + "', '" + entity.getLogin() + "', '" + entity.getPassword() + "')";
+    public void save(User entity) {
+        String sql = SQL_INSERT_INTO_USERS + "('" + entity.getFirstname() + "', '" + entity.getSurname() + "', '" + entity.getLogin() + "', '" + entity.getPassword() + "')";
         try {
             statement.executeUpdate(sql);
         }
         catch (SQLException e) {
             throw new IllegalArgumentException(e);
         }
-            System.out.println(entity.getFirstname() + " " + entity.getPassword() + " " + entity.getLogin() + " " + entity.getPassword());
-
-        return uuid;
+        System.out.println(entity.getFirstname() + " " + entity.getPassword() + " " + entity.getLogin() + " " + entity.getPassword());
     }
 
     @Override
-    public void findBylogin(String login, String password) {
+    public int findBylogin(String login, String password) {
         String sql = "select * from users where login = '" + login + "'";
 
         try {
@@ -53,28 +49,11 @@ public class UserRepositoryJdbcImpl implements UserRepository{
                     .build();
 
             System.out.println(user.getPassword().equals(password));
+            return logintSet.getInt("id");
         }
         catch (SQLException e) {
             throw new IllegalArgumentException(e);
         }
     }
-
-    @Override
-    public boolean findByUuid(String uuid) {
-        String sql = "select * from users where uuid = '" + uuid + "'";
-
-        try {
-            Statement statement = connection.createStatement();
-            ResultSet logintSet = statement.executeQuery(sql);
-
-            if(logintSet.next()) {
-                return true;
-            }
-        }
-        catch (SQLException ignored) {}
-
-        return false;
-    }
-
 
 }

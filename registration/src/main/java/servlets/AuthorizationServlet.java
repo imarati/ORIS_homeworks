@@ -1,19 +1,21 @@
 package servlets;
 
+import models.User;
+import models.UserUuid;
 import repositories.UserRepository;
 import repositories.UserRepositoryJdbcImpl;
+import repositories.UuidRepository;
+import repositories.UuidRepositoryJdbcImpl;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.UUID;
 
 @WebServlet("/auth")
 public class AuthorizationServlet extends HttpServlet {
@@ -22,6 +24,7 @@ public class AuthorizationServlet extends HttpServlet {
     private static final String DB_URL = "jdbc:postgresql://localhost:5432/usersdb";
 
     private UserRepository usersRepository;
+    private UuidRepository uuidRepository;
 
     @Override
     public void init() throws ServletException {
@@ -35,6 +38,7 @@ public class AuthorizationServlet extends HttpServlet {
             Connection connection = DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
             Statement statement = connection.createStatement();
             usersRepository = new UserRepositoryJdbcImpl(connection, statement);
+            uuidRepository = new UuidRepositoryJdbcImpl(connection, statement);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -51,13 +55,29 @@ public class AuthorizationServlet extends HttpServlet {
         String password = req.getParameter("password");
 
         try {
-            usersRepository.findBylogin(login, password);
-            HttpSession httpSession = req.getSession(true);
-            httpSession.setAttribute("authenticated", true);
+            int id = usersRepository.findBylogin(login, password);
+//            HttpSession httpSession = req.getSession(true);
+//            httpSession.setAttribute("authenticated", true);
+
+            UUID uuid = UUID.randomUUID();
+
+            UserUuid userUuid = UserUuid.builder()
+                    .uuid(uuid.toString())
+                    .userId(id)
+                    .build();
+
+            uuidRepository.save(userUuid);
+
+            Cookie cookie = new Cookie("uuid", uuid.toString());
+            resp.addCookie(cookie);
+
+            System.out.println(true);
             resp.sendRedirect("/reg");
         }
         catch (Exception e) {
             resp.sendRedirect("/auth");
         }
+
+
     }
 }

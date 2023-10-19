@@ -5,5 +5,5 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CrudRepository<T> {
-    UUID save(T entity);
+    void save(T entity);
 }
